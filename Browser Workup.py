@@ -62,8 +62,15 @@ app.layout = html.Div([
         },
     ),
     # date time picker not native to dash see https://community.plotly.com/t/dash-timepicker/6541/10
-    # we are assuming a time in PDT
-    dash_datetimepicker.DashDatetimepicker(id='selectrange', startDate='', endDate=''),
+    
+    
+    html.Div(
+        dash_datetimepicker.DashDatetimepicker(id='selectrange', startDate='', endDate=''),
+        # Create element to hide/show, in this case an 'Input Component'
+         style= {'display': 'block'} # <-- This is the line that will be changed by the dropdown callback
+    ),
+    
+    
     
     #dcc.DatePickerRange(
     #    id='my-date-picker-range',
@@ -74,7 +81,23 @@ app.layout = html.Div([
     #),
     #
     html.Div(id='output-container-date-picker-range'),
-    dcc.Graph(id='datatable-upload-graph'),
+    # Barometric Correction Radio Button
+    # dynamic visability https://stackoverflow.com/questions/50213761/changing-visibility-of-a-dash-component-by-updating-other-component
+    html.Div(
+        # Create element to hide/show, in this case an 'Input Component'
+        dcc.RadioItems(id='Barometer Button',
+    options=[
+        {'label': 'Preform Barometric Correction', 'value': 'Baro'},
+        {'label': 'Do Not Preform Barometric Correction', 'value': 'No_Baro'}
+    ], value='Baro'), style= {'display': 'block'} # <-- This is the line that will be changed by the dropdown callback
+    ),
+   
+    
+    html.Div(
+        # Create element to hide/show, in this case an 'Input Component'
+        dcc.Graph(id='datatable-upload-graph'),style= {'display': 'block'} # <-- This is the line that will be changed by the dropdown callback
+    ),
+    
     dash_table.DataTable(id='datatable-upload-container',editable=True)
     
 ])
@@ -91,6 +114,38 @@ def parse_contents(contents, filename):
         # Assume that the user uploaded an excel file
         return pd.read_excel(io.BytesIO(decoded),usecols=[0,1])
 
+# Show or hide barometric selector; if a file is uploaded to application display the barometric pressure question
+@app.callback(
+   Output(component_id='Barometer Button', component_property='style'),
+   Input('datatable-upload', 'contents'))
+
+def show_hide_baro(contents):
+    if contents is not None:
+        return {'display': 'block'}
+    if contents is None:
+        return {'display': 'none'}
+    
+    
+    
+    
+
+# Display GRAPH  
+@app.callback(
+   Output(component_id='datatable-upload-graph', component_property='style'),
+   Input('datatable-upload-container', 'data'))
+
+def hide_Graph(rows):
+    df = pd.DataFrame(rows)
+    if (df.empty or len(df.columns) < 1):
+        return {'display': 'none'}
+    return {'display': 'block'}
+    
+    
+    
+
+
+
+
 # Pick Range, query existing data in SQL Database
 @app.callback(
     #Output('output-container-date-picker-range', 'children'),
@@ -104,12 +159,6 @@ def parse_contents(contents, filename):
 def update_daterange(startDate, endDate, value, contents, filename):
     if contents is None:
         if startDate != '' and endDate != '':
-            # take assumed PDT and convert to UTC (7 hours)
-            startDate = pd.to_datetime(startDate) + timedelta(hours=7)
-            endDate = pd.to_datetime(endDate) + timedelta(hours=7)
-            startDate = startDate.strftime("%Y/%m/%d %H:%M:%S")
-            endDate = endDate.strftime("%Y/%m/%d %H:%M:%S")
-            
             # Get SQL Site Number From Site Name 31q Site Name =233 SQL Number
             search = Available_Sites.loc[Available_Sites['SITE_CODE'].isin([value])]
             G_ID_Lookup = search.iloc[0,1]
