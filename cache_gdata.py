@@ -426,8 +426,7 @@ def display_barometer_search(Barometer_Button, Select_Data_Source, value, style)
     Input(component_id='site', component_property='value'))
 def get_sql_number_from_gid(site_value):
     if site_value != "0":
-        search = Available_Sites.loc[Available_Sites['SITE_CODE'].isin([
-                                                                       site_value])]
+        search = Available_Sites.loc[Available_Sites['SITE_CODE'].isin([site_value])]
         value = search.iloc[0, 1]
 
         return "{}".format(value)
@@ -451,15 +450,13 @@ def update_dp(site_sql_id, Barometer_Button, style):
             'select WaterLevel_GID, Airpressure_GID from '+str(Barometer_Association_Table)+';', conn_6)
         Baro_Gage.reset_index()
 
-        Baro_Gage_search = Baro_Gage.loc[Baro_Gage['WaterLevel_GID'].isin([
-                                                                          site_sql_id])]
+        Baro_Gage_search = Baro_Gage.loc[Baro_Gage['WaterLevel_GID'].isin([site_sql_id])]
         # ILOC is row, column
         if Baro_Gage_search.empty:
             Baro_ID = ""
         else:
             Baro_ID = Baro_Gage_search.iloc[0, 1]
-            search_2 = Available_Sites.loc[Available_Sites['G_ID'].isin([
-                                                                        Baro_ID])]
+            search_2 = Available_Sites.loc[Available_Sites['G_ID'].isin([Baro_ID])]
             B_ID_Lookup = search_2.iloc[0, 0]
             return str(B_ID_Lookup)
     else:
@@ -495,17 +492,6 @@ def delete_association(n_clicks, Site, Available_Barometers):
 '''
 
 
-# Display GRAPH
-@app.callback(
-    Output(component_id='datatable-upload-graph', component_property='style'),
-    Input('datatable-upload-container', 'data'))
-def hide_Graph(rows):
-    df = pd.DataFrame(rows)
-    if (df.empty or len(df.columns) < 1):
-        return {'display': 'none'}
-    return {'display': 'block'}
-
-
 # Get Parameters
 @app.callback(
     Output(component_id='Parameter', component_property='options'),
@@ -528,8 +514,6 @@ def update_parameters(site_value, site_sql_id):
             Parameters = Parameters.rename(
                 columns={"WaterTemp": "water_temperature"})
         # vlist.set_index('SITE_CODE', inplace=True)
-        Parameters.to_csv(
-            r"W:\STS\hydro\GAUGE\Temp\Ian's Temp\cache_check\update_parameters\parameter_list.csv")
         Parameters = Parameters.loc[:, (Parameters != 0).any(axis=0)]
         # returns list of columns for dropdown
         Parameters = Parameters.columns.values.tolist()
@@ -620,8 +604,6 @@ def update_daterange(startDate, endDate, site_sql_id, parameter, contents, filen
             # df2 = Baro_Query(df)
             df["datetime"] = pd.to_datetime(
                 df["datetime"], format='%Y%m%d %H:M:S', errors='ignore')
-            df.to_csv(
-                r"W:\STS\hydro\GAUGE\Temp\Ian's Temp\cache_check\update_daterange\non_discharge_sql_query_output.csv")
             return df.to_dict('records'), [{"name": i, "id": i} for i in df.columns]
         # return blank for a variety of situations
         else:
@@ -751,8 +733,7 @@ def update_Barometer(rows, Barometer_Button, Available_Barometers, Select_Data_S
                 df = pd.merge(df,
                               barometer_query[['datetime', "barometer_data"]],
                               on=['datetime'])
-                df['data'] = ((df['data']-df["barometer_data"])
-                              * 0.0335).round(3)
+                df['data'] = ((df['data']-df["barometer_data"]) * 0.0335).round(3)
                 # Also a shotty conversion using a standard pressure
                 df = df[['datetime', 'data']]
                 return df.to_dict('records'), [{"name": i, "id": i} for i in df.columns], True
@@ -760,9 +741,8 @@ def update_Barometer(rows, Barometer_Button, Available_Barometers, Select_Data_S
         else:
             return df.to_dict('records'), [{"name": i, "id": i} for i in df.columns], True
 
+
 # select data level
-
-
 @app.callback(
     Output('select_data_level', 'style'),
     Input('Select_Data_Source', 'value'))
@@ -773,7 +753,6 @@ def data_level(Select_Data_Source):
     # database query - data
     elif Select_Data_Source is True:
         return {'display': 'block'}
-
 
 # FIELD Observations and Data
 @app.callback(
@@ -815,7 +794,6 @@ def get_observations(parameter_value, Barometer_rows, Barometer_columns, site, s
                 timedelta(hours=7)
             field_observations.reset_index(drop=True, inplace=True)
             observation_present = True
-        #field_observations.to_csv(r"W:/STS/hydro/GAUGE/Temp/Ian's Temp/cahce_check/field_observations.csv")
         return field_observations, observation_present
 
     def get_parameter_observation(data, field_observations):
@@ -828,44 +806,29 @@ def get_observations(parameter_value, Barometer_rows, Barometer_columns, site, s
             parameter_observation.columns[1]: "observation_type",
             parameter_observation.columns[2]: "observation_value",
         }, inplace=True)
-        parameter_observation.to_csv(
-            r"W:\STS\hydro\GAUGE\Temp\Ian's Temp\cache_check\get_observations\get_parameter_observation\parameter_observations_all.csv")
         parameter_observation = parameter_observation[parameter_observation["observation_type"] == int(config[parameter_value]["observation_type"])]
-        parameter_observation.to_csv(
-            r"W:\STS\hydro\GAUGE\Temp\Ian's Temp\cache_check\get_observations\get_parameter_observation\parameter_observation.csv")
         if parameter_observation.empty:
-            parameter_observation.to_csv(
-                r"W:\STS\hydro\GAUGE\Temp\Ian's Temp\cache_check\get_observations\get_parameter_observation\parameter_observation_empty.csv")
             df = finalize_non_discharge_observations(data, field_observations)
             df["parameter_observation"] = "nan"
-            df.to_csv(r"W:\STS\hydro\GAUGE\Temp\Ian's Temp\cache_check\get_observations\get_parameter_observation\parameter_observation_empty_finalize.csv")
             q_observation_present = False
             #df = data
 
         else:
-            parameter_observation.to_csv(
-                r"W:\STS\hydro\GAUGE\Temp\Ian's Temp\cache_check\get_observations\get_parameter_observation\parameter_observation_present.csv")
-            parameter_observation["observation_id"] = parameter_observation["observation_id"].astype(
-                np.int64)
+            parameter_observation["observation_id"] = parameter_observation["observation_id"].astype(np.int64)
             parameter_observation.rename(
                 columns={"observation_value": "parameter_observation"}, inplace=True)
             parameter_observation["parameter_observation"] = parameter_observation["parameter_observation"].astype(float)
             try:
                 field_observations = pd.merge_asof(field_observations, parameter_observation.sort_values(
                     "observation_id"), on=["observation_id"])
-                field_observations.to_csv(r"W:\STS\hydro\GAUGE\Temp\Ian's Temp\cache_check\get_observations\get_parameter_observation\field_observations_merge.csv")
                 # I think this drop is where we are going wrong
                 field_observations.dropna(inplace=True)
-                field_observations.to_csv(r"W:\STS\hydro\GAUGE\Temp\Ian's Temp\cache_check\get_observations\get_parameter_observation\field_observations_drop.csv")
                 df = pd.merge_asof(data, field_observations.sort_values(
                     'datetime'), on=['datetime'], tolerance=pd.Timedelta('15m'))
-                df.to_csv(r"W:\STS\hydro\GAUGE\Temp\Ian's Temp\cache_check\get_observations\get_parameter_observation\df_post_merge.csv")
                 q_observation_present = True
             except:
                 q_observation_present = True
                 df = data
-                df.to_csv(r"W:\STS\hydro\GAUGE\Temp\Ian's Temp\cache_check\get_observations\get_parameter_observation\df_no_merge.csv")
-        df.to_csv(r"W:\STS\hydro\GAUGE\Temp\Ian's Temp\cache_check\get_observations\get_parameter_observation\parameter_observations_final.csv")
         return df, q_observation_present
 
     def finalize_non_discharge_observations(data, field_observations):
@@ -892,12 +855,9 @@ def get_observations(parameter_value, Barometer_rows, Barometer_columns, site, s
             q_observation_present = False
 
         else:
-            q_observation["observation_id"] = q_observation["observation_id"].astype(
-                np.int64)
-            q_observation.rename(
-                columns={"observation_value": "q_observation"}, inplace=True)
-            q_observation["q_observation"] = q_observation["q_observation"].astype(
-                float)
+            q_observation["observation_id"] = q_observation["observation_id"].astype(np.int64)
+            q_observation.rename(columns={"observation_value": "q_observation"}, inplace=True)
+            q_observation["q_observation"] = q_observation["q_observation"].astype(float)
             try:
                 field_observations = pd.merge_asof(field_observations, q_observation.sort_values(
                     "observation_id"), on=["observation_id"])
@@ -919,26 +879,21 @@ def get_observations(parameter_value, Barometer_rows, Barometer_columns, site, s
         from data_cleaning import fill_timeseries
         # fill time series also corrects time stamp
         data = fill_timeseries(data)
-        #data.to_csv(r"W:/STS/hydro/GAUGE/Temp/Ian's Temp/cahce_check/fill_timeseries.csv")
         interval = fill_timeseries.interval
         # fill doesnt transfer to here
         field_observations, observation_present = get_observations()
-        if parameter_value == "FlowLevel":
+        if parameter_value == "FlowLevel" or parameter_value == "discharge":
             df, q_observation_present = get_q_observations(
                 data, field_observations)
+            return df.to_dict('records'), [{"name": i, "id": i} for i in df.columns], True
         if parameter_value == "water_temperature":
-            field_observations.to_csv(
-                r"W:\STS\hydro\GAUGE\Temp\Ian's Temp\cache_check\get_observations\run_parameter_observations.csv")
-            data.to_csv(
-                r"W:\STS\hydro\GAUGE\Temp\Ian's Temp\cache_check\get_observations\data_for_water_temperature_parameter.csv")
             df, q_observation_present = get_parameter_observation(
                 data, field_observations)
+            return df.to_dict('records'), [{"name": i, "id": i} for i in df.columns], True
         else:
             # fill doesnt transfer to here
             df = finalize_non_discharge_observations(data, field_observations)
-        df.to_csv(
-            r"W:\STS\hydro\GAUGE\Temp\Ian's Temp\cache_check\get_observations\function_output.csv")
-        return df.to_dict('records'), [{"name": i, "id": i} for i in df.columns], True
+            return df.to_dict('records'), [{"name": i, "id": i} for i in df.columns], True
 
 @app.callback(
     # CORRECT FIELD data to FIELD OBSERVATIONS
@@ -961,8 +916,6 @@ def correct_data(data_level, site_value, site_sql_id, Ratings_value, Parameter_v
     ''' IT NEEDS WORK BUT DO NOT TRY ANY FANCY OBJECTS FUNCTIONS ETC'''
     #df = pd.DataFrame(Initial_Data_Correction_row)
     df = pd.DataFrame(Initial_Data_Correction_row)
-
-    #df.to_csv("W:/STS/hydro/GAUGE/Temp/Ian's Temp/cahce_check/correct_data/initial_df_for correct_data_function.csv")
     # if there is no data to look at dont show data table
     # Input(component_id='Parameter', component_property='value'),
     data_name = 'corrected_data'
@@ -997,7 +950,6 @@ def correct_data(data_level, site_value, site_sql_id, Ratings_value, Parameter_v
             lambda x: dt.datetime.strftime(x, '%Y%m%d%H%M%S'))
         #df_raw['date'].replace('', np.nan, inplace=True)
         #df_raw = df_raw.dropna(subset=['data'], inplace=True)
-        #df_raw.to_csv("W:/STS/hydro/GAUGE/Temp/Ian's Temp/raw.csv")
         df_raw['data'] = df_raw["data"].astype(float, errors="ignore")
         try:
             df_raw["corrected_data"] = df_raw["corrected_data"].astype(float)
@@ -1072,8 +1024,9 @@ def correct_data(data_level, site_value, site_sql_id, Ratings_value, Parameter_v
         df_q_calculation = df_q_calculation.sort_values(by="datetime")
         df_q_calculation['discharge'] = df_q_calculation['Discharge']
         # Trim dataframe
-        df_q = df_q_calculation[["datetime", "data", "corrected_data", "observation_stage",
-                                 "offset", "discharge", "q_observation", "q_offset", "discharge_rating"]]
+        #df_q = df_q_calculation[["datetime", "data", "corrected_data", "observation_stage",
+                                 #"offset", "discharge", "q_observation", "q_offset", "discharge_rating"]]
+        df_q = df_q_calculation
         return df_q
 
     # finalize discharge dataframe
@@ -1114,9 +1067,7 @@ def correct_data(data_level, site_value, site_sql_id, Ratings_value, Parameter_v
                 df_raw = pd.DataFrame(Initial_Data_Correction_row)
                 # on initial open we can select data vs corrected data
                 initial_data_level(df_raw)
-                #df_raw.to_csv("W:/STS/hydro/GAUGE/Temp/Ian's Temp/cahce_check/initial_data_level.csv")
                 initial_df_reformat(df_raw)
-                #df_raw.to_csv("W:/STS/hydro/GAUGE/Temp/Ian's Temp/cahce_check/initial_data_reformat.csv")
                 try:
                     #df_raw[data_name] = df_raw[data_name].astype(float)
                     df_raw[observation] = df_raw[observation].astype(float)
@@ -1134,7 +1085,6 @@ def correct_data(data_level, site_value, site_sql_id, Ratings_value, Parameter_v
                         df_raw['offset'] = df_raw['offset'].round(3)
                     except:
                         df_raw['offset'] = 0
-                #df_raw.to_csv("W:/STS/hydro/GAUGE/Temp/Ian's Temp/cahce_check/corrected.csv")
                 df_corrected_data = df_raw[[
                     "datetime", "data", data_name, observation, "offset"]]
                 df_corrected_data['datetime'] = pd.to_datetime(
@@ -1169,9 +1119,7 @@ def correct_data(data_level, site_value, site_sql_id, Ratings_value, Parameter_v
                 df_raw = pd.DataFrame(Initial_Data_Correction_row)
                 # on initial open we can select data vs corrected data
                 initial_data_level(df_raw)
-                #df_raw.to_csv("W:/STS/hydro/GAUGE/Temp/Ian's Temp/cahce_check/df_raw_discharge_initial.csv")
                 initial_df_reformat(df_raw)
-                #df_raw.to_csv("W:/STS/hydro/GAUGE/Temp/Ian's Temp/cahce_check/df_raw_discharge_initial_reformat.csv")
                 try:
                     df_raw[data_name] = df_raw[data_name].astype(float)
                     df_raw['offset'] = df_raw['observation_stage'] - df_raw['data']
@@ -1207,8 +1155,9 @@ def correct_data(data_level, site_value, site_sql_id, Ratings_value, Parameter_v
                     df_q = df_raw
                     df_q = full_discharge_calculation(df_q)
                     finalize_discharge_dataframe(df_q)
-                    df_q = df_q[["datetime", "data", "corrected_data", "observation_stage",
-                                 "offset", "discharge", "q_observation", "q_offset", "discharge_rating"]]
+                    #df_q = df_q[["datetime", "data", "corrected_data", "observation_stage",
+                    #             "offset", "discharge", "q_observation", "q_offset", "discharge_rating"]]
+                    df_q = df_raw
                 return df_q.to_dict('records'), [{"name": i, "id": i} for i in df_q.columns], True
 
             if not dff.empty:  # Discharge update
@@ -1231,15 +1180,26 @@ def correct_data(data_level, site_value, site_sql_id, Ratings_value, Parameter_v
                 if Ratings_value == 'NONE':  # If there is no discharge calculate a discharge of zero
                     df_raw["q_offset"] = ""
                     df_raw["discharge_rating"] = ""
-                    df_q = df_raw[["datetime", "data", "corrected_data", "observation_stage",
-                                   "offset", "discharge", "q_observation", "q_offset", "discharge_rating"]]
+                    #df_q = df_raw[["datetime", "data", "corrected_data", "observation_stage",
+                                  # "offset", "discharge", "q_observation", "q_offset", "discharge_rating"]]
+                    df_q = df_raw
                 else:
-                    df_q = df_raw[["datetime", "data", "corrected_data", "observation_stage",
-                                   "offset", "discharge", "q_observation", "q_offset", "discharge_rating"]]
+                    #df_q = df_raw[["datetime", "data", "corrected_data", "observation_stage",
+                                  # "offset", "discharge", "q_observation", "q_offset", "discharge_rating"]]
+                    df_q = df_raw
                     df_q = full_discharge_calculation(df_q)
                     finalize_discharge_dataframe(df_q)
                 return df_q.to_dict('records'), [{"name": i, "id": i} for i in df_q.columns], True
 
+# Display GRAPH
+@app.callback(
+    Output(component_id='datatable-upload-graph', component_property='style'),
+    Input('datatable-upload-container', 'data'))
+def hide_Graph(rows):
+    df = pd.DataFrame(rows)
+    if (df.empty or len(df.columns) < 1):
+        return {'display': 'none'}
+    return {'display': 'block'}
 
 @app.callback(
     Output('datatable-upload-graph', 'figure'),
@@ -1249,226 +1209,22 @@ def correct_data(data_level, site_value, site_sql_id, Ratings_value, Parameter_v
     Input('site_sql_id', 'children'),
     Input('Ratings', 'value'),)
 def display_graph(rows, parameter, site, site_sql_id, rating):
-    df = pd.DataFrame(rows)
-    #df.to_csv("W:/STS/hydro/GAUGE/Temp/Ian's Temp/cahce_check/graph.csv")
-    data_name = 'corrected_data'
-    if "parameter_observation" in df.columns:
-        observation = "parameter_observation"
+    ''' should be the same as update button'''
+    df_raw = pd.DataFrame(rows)
+    changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
+    from cache_graph import graph
+    from cache_graph import save_fig
+    from cache_graph import format_cache_data
+    if (df_raw.empty or len(df_raw.columns) < 1):
+        return dash.no_update
     else:
-        observation = "observation_stage"
-        
-    if (df.empty or len(df.columns) < 1):
-        return {'data': [{'x': [], 'y': [], 'type': 'line'}]}
-    else:
-
-        df['data'] = df['data'].astype(float)
-        df['corrected_data'] = df['corrected_data'].astype(
-            float, errors="ignore")
-        df['observation'] = df[observation].astype(
-            float, errors="ignore")
-
-        df['offset'] = df['offset'].astype(float, errors="ignore")
-
-        # get start and end time
-        start_time = df.head(1)
-        start_time['datetime'] = pd.to_datetime(
-            start_time['datetime'], format='%Y-%m-%d %H:%M:%S', errors='coerce', infer_datetime_format=True)
-        start_time = start_time.iloc[0, 0]
-        end_time = df.tail(1)
-        end_time['datetime'] = pd.to_datetime(
-            end_time['datetime'], format='%Y-%m-%d %H:%M:%S', errors='coerce', infer_datetime_format=True)
-        end_time = end_time.iloc[0, 0]
-
-        df_observations = df.dropna(subset=["observation"])
-        df_observations['datetime_string'] = pd.to_datetime(
-            df_observations['datetime'], format='%Y-%m-%d %H:%M:%S', errors='coerce', infer_datetime_format=True)
-        df_observations['datetime_string'] = df_observations['datetime_string'].map(
-            lambda x: dt.datetime.strftime(x, '%Y-%m-%d %H:%M'))
-        df_observations = df_observations[[
-            'datetime_string', "data", "observation", "offset"]]
-
-        fig_1_title = str(site)+" "+str(data_name) + \
-            "    ("+str(start_time)+" - "+str(end_time)+")"
-        fig_2_title = "observations"
-        fig = make_subplots(
-            rows=2, cols=2, subplot_titles=(
-                str(fig_1_title),
-                str(fig_2_title)),
-            specs=[[{"type": "xy", "secondary_y": True, "rowspan": 2},
-                    {"type": "Table"}], [{}, {"type": "Table"}]],
-            column_widths=[0.75, 0.25],
-            horizontal_spacing=.005,
-            vertical_spacing=.005)
-
-        fig.add_trace(
-            go.Scatter(
-                x=df['datetime'],
-                y=df['data'],
-                line=dict(color='Grey', width=1),
-                name=str("Raw Data")
-            ),
-            row=1, col=1, secondary_y=False,)
-
-        fig.add_trace(go.Scatter(
-            x=df['datetime'],
-            y=df[data_name],
-            line=dict(color='Blue', width=2),
-            name=str("corrected data")), row=1, col=1, secondary_y=True,)
-
-        fig.add_trace(go.Scatter(
-            x=df['datetime'],
-            y=df['observation'],
-            mode='markers',
-            marker=dict(
-                color='Black', size=6, opacity=.9),
-            text='', name='Observations'), row=1, col=1, secondary_y=True,)
-        # Display field ovservation information
-        fig.append_trace(
-            go.Table(
-                header=dict(
-                    values=["datetime", "instrument", "observation", "offset"],
-                    font=dict(size=10),
-                    align="left",
-                ),
-                columnwidth=[40, 20, 20, 20],
-                cells=dict(
-                    # values=[df_observations[k].tolist() for k in df_observations.columns[1:]],
-                    values=[df_observations['datetime_string'],
-                            df_observations['data'],
-                            df_observations["observation"],
-                            df_observations["offset"]],
-                    align="left")
-            ),
-            row=1, col=2)
-
-        if parameter == 'FlowLevel':
-            df = pd.DataFrame(rows)
-            # try:
-            df_q_observations = df.dropna(subset=["q_observation"]).copy()
-            # except:
-            #df_q_observations = pd.DataFrame({'': []})
-            if df_q_observations.empty:
-                df_q_observations['datetime_string'] = ""
-                df_q_observations['q_observation'] = ""
-                df_q_observations["Discharge_Rating"] = ""
-                df_q_observations["q_offset"] = ""
-                df_q_observations['datetime'] = ""
-            elif rating == "NONE" and df_q_observations.empty:
-                df_q_observations["Discharge_Rating"] = ""
-                df_q_observations["q_offset"] = ""
-                df_q_observations['datetime_string'] = ""
-                df_q_observations['datetime'] = ""
-
-            else:
-                df_q_observations['datetime_string'] = pd.to_datetime(
-                    df_q_observations['datetime'], format='%Y-%m-%d %H:%M:%S', errors='coerce', infer_datetime_format=True)
-                df_q_observations['datetime_string'] = df_q_observations['datetime_string'].map(
-                    lambda x: dt.datetime.strftime(x, '%Y-%m-%d %H:%M'))
-                df_q_observations['discharge'] = df_q_observations['discharge'].astype(
-                    float, errors='ignore')
-                # df_q_observations.to_csv(r"W:\STS\hydro\GAUGE\Temp\Data\\SITE.csv")
-                # pd.to_datetime(df_q_observations['DateTime'], format='%Y-%m-%d %H:%M:%S', errors='coerce', infer_datetime_format=True)
-                # df_q_observations['DateTime'].map(lambda x: dt.datetime.strftime(x, '%Y-%m-%d %H:%M'))
-                conn_30 = SQL_String
-                Rating_Offsets = pd.read_sql_query(
-                    'select Offset, Rating_Number from tblFlowRating_Stats;', conn_30)
-                Rating_Offsets['Rating_Number'] = Rating_Offsets['Rating_Number'].str.rstrip(
-                )
-                try:
-                    Rating_Offset = Rating_Offsets[Rating_Offsets['Rating_Number']
-                                                   == rating].iloc[0, 0]
-
-                    Rating_Offset = Rating_Offset.astype(float)
-                    df_q_observations['WaterLevel'] = df["observation_stage"]-Rating_Offset
-                    # Calculate Discharge from Offset
-                    conn_31 = SQL_String
-                    Rating_Points = pd.read_sql_query(
-                        'select G_ID, RatingNumber, WaterLevel, Discharge, Marker, FlowRatings_id from tblFlowRatings WHERE G_ID = '+str(site_sql_id)+';', conn_31)
-                    Rating_Points = Rating_Points[Rating_Points['RatingNumber'] == rating]
-                    Rating_Points.rename(
-                        columns={"Discharge": "Discharge_Rating"}, inplace=True)
-                    df_q_observations = pd.merge_asof(df_q_observations.sort_values('WaterLevel'), Rating_Points.sort_values(
-                        'WaterLevel'), on='WaterLevel', allow_exact_matches=False, direction='nearest')
-                    df_q_observations = df_q_observations.sort_values(
-                        by="datetime")
-
-                    #df_observations.rename(columns={"Discharge_y": "Discharge_Calculated"}, inplace=True)
-                    df_q_observations['q_offset'] = df_q_observations['q_observation'] - \
-                        df_q_observations['Discharge_Rating']
-
-                    df_q_observations['Rating'] = str(rating)
-                #df_q_observationss['DT_STRING'] = pd.to_datetime(df_q_observations['DateTime'], format='%Y-%m-%d %H:%M:%S', errors='coerce', infer_datetime_format=True)
-                # df_observations['DT_STRING'] = df_observations['DT_STRING'].map(lambda x: dt.datetime.strftime(x, '%Y-%m-%d %H:%M'))
-                #df_observations = df_observations[['DT_STRING', "DischargeQ_", "Observation", "Offset"]]
-
-                except:
-                    df_q_observations.rename(
-                        columns={"discharge": "Discharge_Rating"}, inplace=True)
-                    df_q_observations['q_observation'] = ""
-                    df_q_observations["q_offset"] = ""
-
-            fig.add_trace(go.Scatter(
-                x=df['datetime'],
-                y=df["discharge"],
-                line=dict(color='Red', width=2),
-                name=str("discharge")), row=1, col=1, secondary_y=True,)
-            fig.add_trace(go.Scatter(
-                x=df_q_observations['datetime'],
-                y=df_q_observations['q_observation'],
-                mode='markers',
-                marker=dict(
-                    color='Pink', size=6, opacity=.9),
-                text='', name='q Observations'), row=1, col=1, secondary_y=True,)
-            # Display discharge ovservation information
-            fig.append_trace(
-                go.Table(
-                    header=dict(
-                        values=["datetime", "Q Measured",
-                                "Q Record", "Offset"],
-                        font=dict(size=10),
-                        align="left",
-                    ),
-                    columnwidth=[40, 15, 15, 15, 15],
-                    cells=dict(
-                        # values=[df_observations[k].tolist() for k in df_observations.columns[1:]],
-                        values=[df_q_observations['datetime_string'],
-                                df_q_observations['q_observation'],
-                                df_q_observations["Discharge_Rating"],
-                                df_q_observations["q_offset"]],
-                        align="left")
-                ),
-                row=2, col=2)
-
-        # ANNOTATE
-        fig.update_layout(legend=dict(
-            yanchor="bottom",
-            y=.04,
-            xanchor="right",
-            x=.8  # lower number is farther right
-        ))
-        fig.update_xaxes(showline=True, linewidth=.05,
-                         linecolor='black', mirror=True)
-        fig.update_yaxes(showline=True, linewidth=.05,
-                         linecolor='black', mirror=True)
-
-        # Set y-axes titles
-        if parameter == 'FlowLevel':
-            fig.update_yaxes(title_text="Water Level", secondary_y=False)
-            fig.update_yaxes(title_text="Discharge", secondary_y=True,)
-        if parameter != 'FlowLevel':
-            fig.update_yaxes(title_text=str(parameter), secondary_y=False)
-            fig.update_yaxes(title_text="", secondary_y=True)
-
-        fig.update_layout(plot_bgcolor='rgba(0,0,0,0)')
-        fig.update_xaxes(showgrid=True)
-        fig.update_yaxes(showgrid=True)
-        fig.update_xaxes(showticklabels=True)
-        fig.update_yaxes(showticklabels=True)
-        fig.update_layout(
-            margin=dict(l=1, r=1, t=20, b=1)
-        )
+        df, parameter, observation, end_time = format_cache_data(df_raw, parameter)
+        fig = graph(df, site, parameter, observation)
+        # update fig to display on screen, catch graph has its own pre-sets
+        figure_height = 550
+        figure_width = 1900
+        fig.update_layout(height=figure_height, width=figure_width)
         return fig
-
 
 @app.callback(
     dash.dependencies.Output('upload_data_children', 'children'),
@@ -1494,25 +1250,17 @@ def run_upload_data(n_clicks, rows, parameter, site_sql_id, site):
             if parameter == 'groundwater_level' or parameter == "Piezometer":
                 parameter = "groundwater_level"
                 df = df[["datetime", "data", "corrected_data"]]
-                df.to_csv(
-                    r"W:\STS\hydro\GAUGE\Temp\Ian's Temp\cache_check\upload_data\groundwater_level_called.csv")
             if parameter == 'water_temperature':
                 df = df[["datetime", "data", "corrected_data"]]
-                df.to_csv(
-                    r"W:\STS\hydro\GAUGE\Temp\Ian's Temp\cache_check\upload_data\water_temperature_called.csv")
             if parameter == "discharge" or parameter == "FlowLevel":
                 parameter = "discharge"
                 df = df[["datetime", "data", "corrected_data", "discharge"]]
-            df.to_csv(r"W:\STS\hydro\GAUGE\Temp\Ian's Temp\cache_check\upload_data\DF_" +
-                      str(parameter)+"_for_upload.csv")
-            
             full_upload(df, parameter, site_sql_id, 7)
             result = "exported"
 
             return result
     else:
         return dash.no_update
-
 
 @app.callback(
     dash.dependencies.Output('export_data_children', 'children'),
@@ -1522,107 +1270,34 @@ def run_upload_data(n_clicks, rows, parameter, site_sql_id, site):
     Input('site_sql_id', 'children'),
     Input('site', 'value'),)
 def run_export_data(n_clicks, rows, parameter, site_sql_id, site):
-    df = pd.DataFrame(rows)
+    ''' uses same function as update graph, this code is becomingly increasingly redundent '''
+    df_raw = pd.DataFrame(rows)
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
     from cache_graph import graph
+    from cache_graph import save_fig
+    from cache_graph import format_cache_data
     if 'export_data_button' in changed_id:
-        if (df.empty or len(df.columns) < 1):
+        if (df_raw.empty or len(df_raw.columns) < 1):
             return dash.no_update
         else:
-            end_time = df.tail(1)
-            end_time['datetime'] = pd.to_datetime(
-                end_time['datetime'], format='%Y-%m-%d %H:%M:%S', errors='coerce', infer_datetime_format=True)
-            #end_time['datetime'] = pd.to_datetime(end_time['datetime'], format='%Y-%m-%d', errors='coerce', infer_datetime_format=True)
-            end_time['datetime'] = end_time['datetime'].map(
-                lambda x: dt.datetime.strftime(x, '%Y_%m_%d'))
-            end_time = end_time.iloc[0, 0]
+            df, parameter, observation, end_time = format_cache_data(df_raw, parameter)
+            df_export = df.set_index('datetime')
+            df_export.to_csv("W:/STS/hydro/GAUGE/Temp/Ian's Temp/" +
+                str(site)+"_"+str(parameter)+"_"+str(end_time)+".csv")
+            df_export.to_csv("C:/Users/ihiggins/OneDrive - King County/cache_upload/" +
+                str(site)+"_"+str(parameter)+"_"+str(end_time)+".csv")
 
-            df['datetime'] = pd.to_datetime(
-                df['datetime'], format='%Y-%m-%d %H:%M:%S', errors='coerce', infer_datetime_format=True)
-            #end_time['datetime'] = pd.to_datetime(end_time['datetime'], format='%Y-%m-%d', errors='coerce', infer_datetime_format=True)
-            df['datetime'] = df['datetime'].map(
-                lambda x: dt.datetime.strftime(x, '%Y-%m-%d %H:%M:%S'))
-            if parameter == "water_level" or parameter == "LakeLevel":
-                parameter = "water_level"
-                observation = "observation_stage"
-                df = df[["datetime", "data", "corrected_data"]]
-            if parameter == "groundwater_level" or parameter == "Piezometer":
-                parameter = "groundwater_level"
-                observation = "observation_stage"
-                df = df[["datetime", "data", "corrected_data"]]
-            if parameter == 'water_temperature':
-                df = df[["datetime", "data", "corrected_data"]]
-                observation = "parameter_observation"
-            if parameter == "discharge" or parameter == "FlowLevel":
-                parameter = "discharge"
-                df = df[["datetime", "data", "corrected_data", "discharge"]]
-                observation = "q_observation"
-            df.to_csv("W:/STS/hydro/GAUGE/Temp/Ian's Temp/" +
-                      str(site)+"_"+str(parameter)+"_"+str(end_time)+".csv")
-            df.to_csv("C:/Users/ihiggins/OneDrive - King County/cache_upload/" +
-                      str(site)+"_"+str(parameter)+"_"+str(end_time)+".csv")
+            fig = graph(df, site, parameter, observation)
+            save_fig(fig, df, site, parameter)
+
             result = "uploaded"
-            
-            graph(df, site, parameter, observation)
+            return result
             #return result
     else:
         return dash.no_update
         print("")
 
 
-'''
-    html.Button('export_data', id='export_data_button', n_clicks=0),
-                       html.Div(id='export_data_children', style= {'display': 'block'}),
-
-    html.Button('upload_data', id='upload_n', n_clicks=0),
-                      html.Div(id='upload_data_children', style= {'display': 'block'}),
-
-
-'''
-
-'''
-@app.callback(
-    dash.dependencies.Output('upload_data_children', 'children'),
-    [dash.dependencies.Input('upload_data_button', 'n_clicks')],
-    Input('Corrected_Data', 'data'),
-def run_upload_data(n_clicks, rows):
-    df = pd.DataFrame(rows)
-    changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
-    if 'upload_data_button' in changed_id:
-        if (df.empty or len(df.columns) < 1):
-            return dash.no_update
-        else:
-            # Dense timestamp conversion
-            df['DateTime'] = pd.to_datetime(df['DateTime'], format='%Y-%m-%d %H:%M:%S', errors='coerce', infer_datetime_format=True)
-            df.rename(columns={"DateTime": config['FlowLevel']['datetime']}, inplace=True)
-            result = "data"
-            return result
-    else:
-        return dash.no_update
-
-@app.callback(
-    dash.dependencies.Output('export_upload_data_children', 'children'),
-    [dash.dependencies.Input('export_upload_data_button', 'n_clicks')],
-    Input('Corrected_Data', 'data'),
-def run_export_upload_data(n_clicks, rows,):
-    df = pd.DataFrame(rows)
-    if not n_clicks:
-        #raise dash.exceptions.PreventUpdate
-        return dash.no_update
-    else:
-        
-        if (df.empty or len(df.columns) < 1):
-            result = "Empty"
-            return result
-        else:
-            result = "data"
-            return result
-'''
 # You could also return a 404 "URL not found" page here
 if __name__ == '__main__':
-    # app.run_server(debug=True)
-   # app.run_server(port="8050",host='10.4.1.2',debug=False)
-    # http://127.0.0.1:8050/
     app.run_server(port="8050",host='127.0.0.1',debug=True)
-    # .run_server(host='0.0.0.0',debug=True)
-    #app.run_server(port="8080", host='146.129.56.38', debug=True) # doesntwork

@@ -587,24 +587,22 @@ def full_upload(df, parameter, site_sql_id, utc_offset):
     upload_data(df, parameter, site_sql_id, utc_offset)
     daily_table(parameter, site_sql_id, utc_offset)
 
-
 def manual_upload():
     #parameter_upload_data = pd.read_csv(r"W:\STS\hydro\GAUGE\Temp\Ian's Temp\output.csv")
     #parameter_upload_data = pd.read_csv(r"C:\Users\ihiggins\Documents\raw.csv")
     df = pd.read_csv(r"C:\Users\ihiggins\OneDrive - King County\cache_upload\COS_Site02_water_temperature_2022_02_08.csv")
-    
-    
+
     #parameter_upload_data.rename(columns={"Water_Level_ft": "data"}, inplace=True)
     #parameter_upload_data.drop(columns=['Estimate'], inplace=True)
     parameter = "water_temperature"
     df = df.rename(columns={config[parameter]["datetime"]: "datetime", config[parameter]["data"]: "data", config[parameter]["corrected_data"]: "corrected_data"})
     df = df[["datetime", "data", "corrected_data"]]
     offset = 0
-    
+
     site_name = "wl1509w"
     site_sql_id = 1899
     utc_offset = 7
-    
+
     clean_file(df, parameter, site_sql_id, utc_offset)
     print(df)
     delete_data(df, parameter, site_sql_id)

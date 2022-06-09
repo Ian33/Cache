@@ -168,7 +168,7 @@ config_file['Conductivity']={
         "daily_provisional": "C_Provisional",
         # this is to find the proper telemetry file column in GData autoloader
         "telemetry_file": "File_Name",
-        "observation_type": 0,
+        "observation_type": 6,
         }
 config_file['DO']={
         "table" : 'tblDOGauging',
@@ -531,8 +531,10 @@ config_file["Favorites"]={
         "Sports": "VolleyBall",
         "Books": "Historical Books"
         }
- 
+
 #SAVE CONFIG FILE
+#SAVE CONFIG FILE
+
 with open(r"C:\Users\ihiggins\Documents\Python\Cache gData\gdata_config.ini","w") as file_object:
     config_file.write(file_object)
 print("Config file 'gdata_config.ini' created")
@@ -541,6 +543,10 @@ print("Config file 'gdata_config.ini' created")
 with open(r"C:\Users\ihiggins\Documents\Python\Autoloader\gdata_config.ini","w") as file_object:
     config_file.write(file_object)
 print("Config file 'gdata_config.ini' created")
+
+
+
+
 
 #print file content
 read_file=open("gdata_config.ini","r")
